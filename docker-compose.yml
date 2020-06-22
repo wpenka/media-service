@@ -1,0 +1,15 @@
+version: "3"
+
+services:
+  mediaservice:
+    build:
+      context: .
+      args:
+        CONFIG_FILE: config/docker.application.properties
+        JAR_FILE: build/libs/*.jar
+    deploy:
+      replicas: 1
+    ports:
+      - "9092:9092"
+    volumes:
+      - upload:/opt/balade/upload
