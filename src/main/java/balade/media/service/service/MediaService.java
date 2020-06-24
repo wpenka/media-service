@@ -20,24 +20,26 @@ public class MediaService implements IMediaService {
     private final String uploadedFolder;
     private final Path rootLocation;
     private final Logger log = LoggerFactory.getLogger(MediaService.class);
+    private IFile fileUtils ;
 
     public MediaService(String uploadedFolder) {
         this.rootLocation = Paths.get(uploadedFolder);
         this.uploadedFolder = uploadedFolder;
+        this.fileUtils = new DefaultFileUtil();
     }
 
     @Override
     public Processing appendData(Slice slice) {
         log.debug("appending Length [{}]  - file name {}", slice.getSize(),slice.getName());
-        File file = new File(uploadedFolder+slice.getName());
+        File file = getFile(slice.getName());
         try {
-            if (slice.getSize()==0||"".equals(slice.getName()==null||"".equals(slice.getType())||slice.getType()==null))
+            if (slice.getSize()==0||slice.getName()==null||slice.getType()==null||"".equals(slice.getType()))
             throw new InconsistantSlideException(slice);
-            FileUtils.touch(file);
+            fileUtils.touch(file);
         if(!file.exists()||file.isDirectory()){
             file.createNewFile();
         }
-        FileUtils.writeByteArrayToFile(file, slice.getData(),true);
+        fileUtils.writeByteArrayToFile(file, slice.getData(),true);
         if (file.length() >= slice.getSize()) {
             return Processing.build(file.length())
                     .setComplete(true)
@@ -49,10 +51,14 @@ public class MediaService implements IMediaService {
         }
     }
 
+    private File getFile(String name) {
+        return this.fileUtils.createFile(uploadedFolder + name);
+    }
+
 
     @Override
     public long getSize(String name) {
-        File file = new File(uploadedFolder+name);
+        File file = getFile(name);
         if (!file.exists())
           return 0;
        return file.length();
@@ -79,5 +85,9 @@ public class MediaService implements IMediaService {
 
     private Path load(String filename) {
         return rootLocation.resolve(filename);
+    }
+
+    public void setFileUtils(IFile fileUtils) {
+        this.fileUtils = fileUtils;
     }
 }
