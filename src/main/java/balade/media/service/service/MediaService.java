@@ -34,7 +34,7 @@ public class MediaService implements IMediaService {
     @Override
     public Processing appendData(Slice slice) {
         log.debug("appending Length [{}]  - file name {}", slice.getSize(), slice.getName());
-        File file = getFile(slice.getName());
+        File file = getFile(slice.getName() ,slice.getType());
         try {
             if (isInvalidSlice(slice)) {
                 throw new InconsistantSlideException(slice);
@@ -53,6 +53,7 @@ public class MediaService implements IMediaService {
             return getFailedProcessing(e);
         }
     }
+
 
     private boolean isInvalidSlice(Slice slice) {
         return slice.getSize() == 0 || slice.getName() == null || slice.getType() == null || "".equals(slice.getType());
@@ -78,14 +79,15 @@ public class MediaService implements IMediaService {
     }
 
 
-    private File getFile(String name) {
+
+    public File getFile(String name , String type) {
         return this.fileUtils.createFile(uploadedFolder + name);
     }
 
 
     @Override
     public long getSize(String name) {
-        File file = getFile(name);
+        File file = getFile(name ,null);
         if (!file.exists())
             return 0;
         return file.length();
