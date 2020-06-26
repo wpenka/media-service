@@ -74,7 +74,7 @@ public class MediaService implements IMediaService {
             return Processing.build(file.length())
                     .setComplete(true)
                     .setUrl(expectSubPathName.toString());
-        
+
     }
 
 
