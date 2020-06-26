@@ -59,24 +59,23 @@ public class MediaService implements IMediaService {
     }
 
     private Processing getFailedProcessing(Exception e) {
-         return Processing.build(0).setErrorMessage(e.getClass() + ": " + e.getMessage()).setComplete(true);
+        return Processing.build(0).setErrorMessage(e.getClass() + ": " + e.getMessage()).setComplete(true);
     }
 
     private Processing getCompleteProcessing(Slice slice, File file) {
 
-            String[] filePathBlock = file.getAbsolutePath()
-                                       .split(File.pathSeparator);
+        String[] filePathBlock = file.getAbsolutePath()
+                .split(File.pathSeparator);
 
-            StringBuilder expectSubPathName = new StringBuilder(filePathBlock[filePathBlock.length-2]);
-            expectSubPathName.append(File.pathSeparator)
-                    .append(filePathBlock[filePathBlock.length-1]);
+        StringBuilder expectSubPathName = new StringBuilder(filePathBlock[filePathBlock.length - 2]);
+        expectSubPathName.append(File.pathSeparator)
+                .append(filePathBlock[filePathBlock.length - 1]);
 
-            return Processing.build(file.length())
-                    .setComplete(true)
-                    .setUrl(expectSubPathName.toString());
-        
+        return Processing.build(file.length())
+                .setComplete(true)
+                .setUrl(expectSubPathName.toString());
+
     }
-
 
 
     private File getFile(String name) {

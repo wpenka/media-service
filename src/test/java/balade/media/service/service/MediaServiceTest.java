@@ -141,4 +141,25 @@ class MediaServiceTest {
         subPathBuilder.append(File.pathSeparator).append("williams-avatar.png");
         assertThat(processing.getUrl()).startsWith(subPathBuilder.toString());
     }
+
+    @Test
+    void shouldSaveSliceInTheImagesSubfolderForTypeImage() {
+        Slice slice = new Slice("williams-avatar.png" ,"image/png",2 ,"ertyy".getBytes());
+        MediaService mediaService = new MediaService("filelocation");
+        IFile fileutils = mock(DefaultFileUtil.class);
+        mediaService.setFileUtils(fileutils);
+        when(fileutils.createFile(anyString())).thenReturn(file);
+        when(file.exists()).thenReturn(true);
+        when(file.isDirectory()).thenReturn(false);
+        when(file.length()).thenReturn(2L);
+
+
+        Processing processing =mediaService.appendData(slice);
+
+        assertThat(processing.isComplete()).isEqualTo(true);
+
+        StringBuilder subPathBuilder = new StringBuilder("images");
+        subPathBuilder.append(File.pathSeparator).append("williams-avatar.png");
+        assertThat(processing.getUrl()).startsWith(subPathBuilder.toString());
+    }
 }
