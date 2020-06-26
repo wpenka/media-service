@@ -21,6 +21,12 @@ class MediaServiceTest {
     void setUp() {
 
         file = mock(File.class);
+        StringBuilder filePathBuilder = new StringBuilder("D:");
+        filePathBuilder.append(File.pathSeparator).append("bekoDir")
+                .append(File.pathSeparator).append("images")
+                .append(File.pathSeparator).append("QWERTY");
+        when(file.getAbsolutePath()).thenReturn(filePathBuilder.toString());
+
     }
 
     @Test
@@ -39,6 +45,7 @@ class MediaServiceTest {
         Slice slice = new Slice("QWERTY" ,"A",2 ,"ertyy".getBytes());
         MediaService mediaService = new MediaService("filelocation");
         IFile fileutils = mock(DefaultFileUtil.class);
+        when(fileutils.createFile(anyString())).thenReturn(file);
         mediaService.setFileUtils(fileutils);
         mediaService.appendData(slice);
         verify(fileutils , times(1)).touch(any());
@@ -72,7 +79,7 @@ class MediaServiceTest {
 
     @Test
     void shouldReturnCompleteProcessingWithFileLength() throws IOException {
-        Slice slice = new Slice("QWERTY" ,"A",2 ,"ertyy".getBytes());
+        Slice slice = new Slice("QWERTY" ,"B",2 ,"ertyy".getBytes());
         MediaService mediaService = new MediaService("filelocation");
         IFile fileutils = mock(DefaultFileUtil.class);
         mediaService.setFileUtils(fileutils);
@@ -84,12 +91,12 @@ class MediaServiceTest {
         Processing processing =mediaService.appendData(slice);
 
         assertThat(processing.getCurrentSize()).isEqualTo(file.length());
-        assertThat(processing.getUrl()).isEqualTo(slice.getName());
+        assertThat(processing.getUrl()).endsWith(slice.getName());
     }
 
     @Test
     void shouldReturnCompleteProcessingWhenFileExist() throws IOException {
-        Slice slice = new Slice("QWERTY" ,"A",2 ,"ertyy".getBytes());
+        Slice slice = new Slice("QWERTY" ,"B",2 ,"ertyy".getBytes());
         MediaService mediaService = new MediaService("filelocation");
         IFile fileutils = mock(DefaultFileUtil.class);
         mediaService.setFileUtils(fileutils);
@@ -102,7 +109,7 @@ class MediaServiceTest {
 
         verify(fileutils, never()).writeByteArrayToFile(file, slice.getData(),true);
         assertThat(processing.isComplete()).isEqualTo(true);
-        assertThat(processing.getUrl()).isEqualTo(slice.getName());
+        assertThat(processing.getUrl()).endsWith(slice.getName());
     }
 
     /* williams-avatar.png
@@ -120,9 +127,18 @@ class MediaServiceTest {
         when(file.isDirectory()).thenReturn(false);
         when(file.length()).thenReturn(2L);
 
+        StringBuilder filePathBuilder = new StringBuilder("D:");
+        filePathBuilder.append(File.pathSeparator).append("bekoDir")
+                .append(File.pathSeparator).append("images")
+                .append(File.pathSeparator).append("williams-avatar.png");
+        when(file.getAbsolutePath()).thenReturn(filePathBuilder.toString());
+
         Processing processing =mediaService.appendData(slice);
 
         assertThat(processing.isComplete()).isEqualTo(true);
-        assertThat(processing.getUrl()).startsWith("images/");
+
+        StringBuilder subPathBuilder = new StringBuilder("images");
+        subPathBuilder.append(File.pathSeparator).append("williams-avatar.png");
+        assertThat(processing.getUrl()).startsWith(subPathBuilder.toString());
     }
 }

@@ -9,11 +9,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.util.StringUtils;
 
 import java.io.File;
 import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 
 
 public class MediaService implements IMediaService {
@@ -57,14 +59,24 @@ public class MediaService implements IMediaService {
     }
 
     private Processing getFailedProcessing(Exception e) {
-        return Processing.build(0).setErrorMessage(e.getClass() + ": " + e.getMessage()).setComplete(true);
+         return Processing.build(0).setErrorMessage(e.getClass() + ": " + e.getMessage()).setComplete(true);
     }
 
     private Processing getCompleteProcessing(Slice slice, File file) {
-        return Processing.build(file.length())
-                .setComplete(true)
-                .setUrl(slice.getName());
+
+            String[] filePathBlock = file.getAbsolutePath()
+                                       .split(File.pathSeparator);
+
+            StringBuilder expectSubPathName = new StringBuilder(filePathBlock[filePathBlock.length-2]);
+            expectSubPathName.append(File.pathSeparator)
+                    .append(filePathBlock[filePathBlock.length-1]);
+
+            return Processing.build(file.length())
+                    .setComplete(true)
+                    .setUrl(expectSubPathName.toString());
+        
     }
+
 
 
     private File getFile(String name) {
