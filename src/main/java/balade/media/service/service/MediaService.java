@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+
 import java.io.File;
 import java.net.MalformedURLException;
 import java.nio.file.Path;
@@ -20,7 +21,7 @@ public class MediaService implements IMediaService {
     private final String uploadedFolder;
     private final Path rootLocation;
     private final Logger log = LoggerFactory.getLogger(MediaService.class);
-    private IFile fileUtils ;
+    private IFile fileUtils;
 
     public MediaService(String uploadedFolder) {
         this.rootLocation = Paths.get(uploadedFolder);
@@ -30,26 +31,41 @@ public class MediaService implements IMediaService {
 
     @Override
     public Processing appendData(Slice slice) {
-        log.debug("appending Length [{}]  - file name {}", slice.getSize(),slice.getName());
+        log.debug("appending Length [{}]  - file name {}", slice.getSize(), slice.getName());
         File file = getFile(slice.getName());
         try {
-            if (slice.getSize()==0||slice.getName()==null||slice.getType()==null||"".equals(slice.getType()))
-            throw new InconsistantSlideException(slice);
+            if (isInvalidSlice(slice)) {
+                throw new InconsistantSlideException(slice);
+            }
             fileUtils.touch(file);
-        if(!file.exists()||file.isDirectory()){
+            if (file.exists() && !file.isDirectory()) {
+                return getCompleteProcessing(slice, file);
+            }
             file.createNewFile();
-        }
-        fileUtils.writeByteArrayToFile(file, slice.getData(),true);
-        if (file.length() >= slice.getSize()) {
-            return Processing.build(file.length())
-                    .setComplete(true)
-                    .setUrl(slice.getName());
-        }
-        return Processing.build(file.length());
+            fileUtils.writeByteArrayToFile(file, slice.getData(), true);
+            if (file.length() >= slice.getSize()) {
+                return getCompleteProcessing(slice, file);
+            }
+            return Processing.build(file.length());
         } catch (Exception e) {
-            return Processing.build(0).setErrorMessage(e.getClass()+": "+e.getMessage()).setComplete(true);
+            return getFailedProcessing(e);
         }
     }
+
+    private boolean isInvalidSlice(Slice slice) {
+        return slice.getSize() == 0 || slice.getName() == null || slice.getType() == null || "".equals(slice.getType());
+    }
+
+    private Processing getFailedProcessing(Exception e) {
+        return Processing.build(0).setErrorMessage(e.getClass() + ": " + e.getMessage()).setComplete(true);
+    }
+
+    private Processing getCompleteProcessing(Slice slice, File file) {
+        return Processing.build(file.length())
+                .setComplete(true)
+                .setUrl(slice.getName());
+    }
+
 
     private File getFile(String name) {
         return this.fileUtils.createFile(uploadedFolder + name);
@@ -60,8 +76,8 @@ public class MediaService implements IMediaService {
     public long getSize(String name) {
         File file = getFile(name);
         if (!file.exists())
-          return 0;
-       return file.length();
+            return 0;
+        return file.length();
     }
 
 
@@ -72,13 +88,11 @@ public class MediaService implements IMediaService {
             Resource resource = new UrlResource(file.toUri());
             if (resource.exists() || resource.isReadable()) {
                 return resource;
-            }
-            else {
+            } else {
                 throw new StorageFileNotFoundException(
                         "Could not read file: " + filename);
             }
-        }
-        catch (MalformedURLException e) {
+        } catch (MalformedURLException e) {
             throw new StorageFileNotFoundException("Could not read file: " + filename, e);
         }
     }

@@ -71,7 +71,7 @@ class MediaServiceTest {
     }
 
     @Test
-    void shouldReturnCompleteProcessingWithFileLength() {
+    void shouldReturnCompleteProcessingWithFileLength() throws IOException {
         Slice slice = new Slice("QWERTY" ,"A",2 ,"ertyy".getBytes());
         MediaService mediaService = new MediaService("filelocation");
         IFile fileutils = mock(DefaultFileUtil.class);
@@ -80,8 +80,49 @@ class MediaServiceTest {
         when(file.exists()).thenReturn(false);
         when(file.isDirectory()).thenReturn(true);
         when(file.length()).thenReturn(2L);
+
         Processing processing =mediaService.appendData(slice);
+
         assertThat(processing.getCurrentSize()).isEqualTo(file.length());
         assertThat(processing.getUrl()).isEqualTo(slice.getName());
+    }
+
+    @Test
+    void shouldReturnCompleteProcessingWhenFileExist() throws IOException {
+        Slice slice = new Slice("QWERTY" ,"A",2 ,"ertyy".getBytes());
+        MediaService mediaService = new MediaService("filelocation");
+        IFile fileutils = mock(DefaultFileUtil.class);
+        mediaService.setFileUtils(fileutils);
+        when(fileutils.createFile(anyString())).thenReturn(file);
+        when(file.exists()).thenReturn(true);
+        when(file.isDirectory()).thenReturn(false);
+        when(file.length()).thenReturn(2L);
+
+        Processing processing =mediaService.appendData(slice);
+
+        verify(fileutils, never()).writeByteArrayToFile(file, slice.getData(),true);
+        assertThat(processing.isComplete()).isEqualTo(true);
+        assertThat(processing.getUrl()).isEqualTo(slice.getName());
+    }
+
+    /* williams-avatar.png
+     * images/williams-avatar.png
+     * images/williams-avatar.png
+     * */
+    @Test
+    void shoulReturnCompleteProcessingWithUrlContainingImage() {
+        Slice slice = new Slice("williams-avatar.png" ,"image/png",2 ,"ertyy".getBytes());
+        MediaService mediaService = new MediaService("filelocation");
+        IFile fileutils = mock(DefaultFileUtil.class);
+        mediaService.setFileUtils(fileutils);
+        when(fileutils.createFile(anyString())).thenReturn(file);
+        when(file.exists()).thenReturn(true);
+        when(file.isDirectory()).thenReturn(false);
+        when(file.length()).thenReturn(2L);
+
+        Processing processing =mediaService.appendData(slice);
+
+        assertThat(processing.isComplete()).isEqualTo(true);
+        assertThat(processing.getUrl()).startsWith("images/");
     }
 }
